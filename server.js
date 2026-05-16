@@ -11,6 +11,11 @@ app.get("/", (req, res) => {
   res.download(path.join(__dirname, "manual.pdf"));
 });
 
+// Serve TXT
+app.get("/txt", (req, res) => {
+  res.download(path.join(__dirname, "manual.txt"));
+});
+
 // Health route
 app.get("/health", (req, res) => {
   res.send("Server is running");
