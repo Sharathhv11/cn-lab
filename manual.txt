@@ -1,0 +1,1718 @@
+﻿2. Implement of error correction code (like CRC). 
+
+ 
+
+#include <stdio.h> 
+
+#include <stdlib.h> 
+
+#include <string.h> 
+
+ 
+
+void xorOperation(char *dividend, char *divisor, int len){ 
+
+    for (int i = 1; i < len; i++){ 
+
+        if(dividend[i] == divisor[i]) 
+
+            dividend[i] = '0'; 
+
+        else 
+
+            dividend[i] = '1'; 
+
+    } 
+
+} 
+
+ 
+
+void crcDivision(char* data, char* generator, char* remainder){ 
+
+    int dataLen = strlen(data); 
+
+    int genLen = strlen(generator); 
+
+    char temp[100]; 
+
+    strncpy(temp, data, genLen); 
+
+    temp[genLen] = '\0'; 
+
+ 
+
+    int cur = genLen; 
+
+ 
+
+    while(cur < dataLen){ 
+
+        if(temp[0] == '1') 
+
+            xorOperation(temp, generator, genLen); 
+
+ 
+
+        memmove(temp, temp + 1, genLen - 1); 
+
+        temp[genLen - 1] = data[cur]; 
+
+        cur++; 
+
+    } 
+
+    if(temp[0] == '1') 
+
+
+
+        xorOperation(temp, generator, genLen); 
+
+    strcpy(remainder, temp + 1); 
+
+} 
+
+ 
+
+int main(){ 
+
+    char data[100], generator[100]; 
+
+    char appendedData[100], remainder[100]; 
+
+ 
+
+    printf("Enter data bits: "); 
+
+    scanf("%s", data); 
+
+ 
+
+    printf("Enter generator bits: "); 
+
+    scanf("%s", generator); 
+
+ 
+
+    int dataLen = strlen(data); 
+
+    int genLen = strlen(generator); 
+
+ 
+
+    strcpy(appendedData, data); 
+
+ 
+
+    // Append zeros 
+
+    for(int i = 0; i < genLen - 1; i++){ 
+
+        appendedData[dataLen + i] = '0'; 
+
+    } 
+
+    appendedData[dataLen + genLen - 1] = '\0'; 
+
+ 
+
+    crcDivision(appendedData, generator, remainder); 
+
+    printf("CRC Remainder: %s\n", remainder); 
+
+ 
+
+    char finalData[100]; 
+
+    strcpy(finalData, data); 
+
+    strcat(finalData, remainder); 
+
+ 
+
+    printf("Transmitted codeword: %s\n", finalData); 
+
+
+
+ 
+
+    char received[100], checkRemainder[100]; 
+
+    printf("Enter received codeword: "); 
+
+    scanf("%s", received); 
+
+ 
+
+    crcDivision(received, generator, checkRemainder); 
+
+ 
+
+    if(strspn(checkRemainder, "0") == strlen(checkRemainder)) 
+
+        printf("No error detected\n"); 
+
+    else 
+
+        printf("Error detected\n"); 
+
+ 
+
+    return 0; 
+
+} 
+
+ 
+
+ 
+
+3. Simulate the transmission of ping messages over a network topology 
+consisting of 6 nodes. 
+
+ 
+
+# Create simulator 
+
+set ns [new Simulator] 
+
+ 
+
+# NAM and Trace files 
+
+set nf [open p3.nam w] 
+
+$ns namtrace-all $nf 
+
+set nd [open p3.tr w] 
+
+$ns trace-all $nd 
+
+ 
+
+# Finish procedure 
+
+proc finish {} { 
+
+    global ns nf nd 
+
+    $ns flush-trace 
+
+    close $nf 
+
+
+
+    close $nd 
+
+    exec nam p3.nam & 
+
+    exit 0 
+
+} 
+
+ 
+
+# Create nodes 
+
+set n0 [$ns node] 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+set n3 [$ns node] 
+
+set n4 [$ns node] 
+
+set n5 [$ns node] 
+
+set n6 [$ns node] 
+
+ 
+
+# Create links 
+
+$ns duplex-link $n1 $n0 1Mb 12ms DropTail 
+
+$ns duplex-link $n2 $n0 1Mb 10ms DropTail 
+
+$ns duplex-link $n3 $n0 1Mb 10ms DropTail 
+
+$ns duplex-link $n4 $n0 1Mb 10ms DropTail 
+
+$ns duplex-link $n5 $n0 1Mb 10ms DropTail 
+
+$ns duplex-link $n6 $n0 1Mb 11ms DropTail 
+
+ 
+
+# Orientation for NAM visualization 
+
+$ns duplex-link-op $n1 $n0 orient right-down 
+
+$ns duplex-link-op $n2 $n0 orient left-up 
+
+$ns duplex-link-op $n3 $n0 orient right 
+
+$ns duplex-link-op $n4 $n0 orient right-up 
+
+$ns duplex-link-op $n5 $n0 orient left-down 
+
+$ns duplex-link-op $n6 $n0 orient left 
+
+ 
+
+# Ping receive procedure 
+
+Agent/Ping instproc recv {from rtt} { 
+
+    $self instvar node_ 
+
+
+
+    puts "node[$node_ id] receive ping answer from $from with round-trip-time 
+$rtt ms." 
+
+} 
+
+ 
+
+# Create ping agents 
+
+set p1 [new Agent/Ping] 
+
+set p2 [new Agent/Ping] 
+
+set p3 [new Agent/Ping] 
+
+set p4 [new Agent/Ping] 
+
+set p5 [new Agent/Ping] 
+
+set p6 [new Agent/Ping] 
+
+ 
+
+# Labels for nodes 
+
+$n0 label "center" 
+
+$n1 label "ping1" 
+
+$n2 label "ping2" 
+
+$n3 label "ping3" 
+
+$n4 label "ping4" 
+
+$n5 label "ping5" 
+
+$n6 label "ping6" 
+
+ 
+
+# Colors 
+
+$ns color 1 red 
+
+$ns color 2 blue 
+
+$ns color 3 green 
+
+$ns color 4 orange 
+
+$ns color 5 purple 
+
+ 
+
+# Attach agents to nodes 
+
+$ns attach-agent $n1 $p1 
+
+$ns attach-agent $n2 $p2 
+
+$ns attach-agent $n3 $p3 
+
+$ns attach-agent $n4 $p4 
+
+
+
+$ns attach-agent $n5 $p5 
+
+$ns attach-agent $n6 $p6 
+
+ 
+
+# Queue limits on center node 
+
+$ns queue-limit $n0 $n4 3 
+
+$ns queue-limit $n0 $n5 2 
+
+$ns queue-limit $n0 $n6 2 
+
+ 
+
+# Set class for agents 
+
+$p1 set class_ 1 
+
+$p2 set class_ 2 
+
+$p3 set class_ 3 
+
+$p4 set class_ 4 
+
+$p5 set class_ 5 
+
+$p6 set class_ 1 
+
+ 
+
+ 
+
+# Connect ping agents to the center node (so they can send/receive) 
+
+$ns connect $p1 $p2 
+
+$ns connect $p2 $p3 
+
+$ns connect $p3 $p4 
+
+$ns connect $p4 $p5 
+
+$ns connect $p5 $p6 
+
+$ns connect $p6 $p1 
+
+ 
+
+# Schedule ping sends 
+
+$ns at 0.1 "$p1 send" 
+
+$ns at 0.3 "$p2 send" 
+
+$ns at 0.5 "$p3 send" 
+
+$ns at 1.0 "$p4 send" 
+
+$ns at 1.2 "$p5 send" 
+
+$ns at 1.4 "$p6 send" 
+
+ 
+
+
+
+# Finish simulation 
+
+$ns at 2.0 "finish" 
+
+ 
+
+# Run the simulation 
+
+$ns run 
+
+ 
+
+ 
+
+ 
+
+4. Simulate three nodes point– to – point network with duplex links between 
+them. Set the queue size and vary the bandwidth and find the number of packets 
+dropped. 
+
+ 
+
+# Create Simulator 
+
+set ns [new Simulator] 
+
+ 
+
+$ns color 1 Red 
+
+ 
+
+# Trace Files 
+
+set nt [open p4.tr w] 
+
+$ns trace-all $nt 
+
+ 
+
+set na [open p4.nam w] 
+
+$ns namtrace-all $na 
+
+ 
+
+# Create Nodes 
+
+set n0 [$ns node] 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+ 
+
+# Node Colors 
+
+$n0 color Blue 
+
+$n1 color Pink 
+
+$n2 color Purple 
+
+ 
+
+
+
+# Node Labels 
+
+$ns at 0.0 "$n0 label TCP-Source" 
+
+$ns at 0.0 "$n1 label Center-node" 
+
+$ns at 0.0 "$n2 label TCP-Sink" 
+
+ 
+
+# Links 
+
+$ns duplex-link $n0 $n1 10Mb 1ms DropTail 
+
+$ns queue-limit $n0 $n1 10 
+
+ 
+
+$ns duplex-link $n1 $n2 80Mb 1ms DropTail 
+
+$ns queue-limit $n1 $n2 10 
+
+ 
+
+# TCP Agent 
+
+set tcp0 [new Agent/TCP] 
+
+$tcp0 set class_ 1 
+
+$ns attach-agent $n0 $tcp0 
+
+ 
+
+# Sink 
+
+set sink [new Agent/TCPSink] 
+
+$ns attach-agent $n2 $sink 
+
+ 
+
+# Connect Agents 
+
+$ns connect $tcp0 $sink 
+
+ 
+
+# FTP Application 
+
+set ftp0 [new Application/FTP] 
+
+$ftp0 set packetSize_ 500 
+
+$ftp0 set interval_ 0.005 
+
+$ftp0 attach-agent $tcp0 
+
+ 
+
+# Finish Procedure 
+
+proc End {} { 
+
+    global ns na nt 
+
+
+
+    $ns flush-trace 
+
+    close $na 
+
+    close $nt 
+
+    exec nam p4.nam & 
+
+    exit 0 
+
+} 
+
+ 
+
+# Start and Stop 
+
+$ns at 0.0 "$ftp0 start" 
+
+$ns at 20.0 "End" 
+
+ 
+
+# Run Simulation 
+
+$ns run 
+
+ 
+
+ 
+
+ 
+
+-------------------------------------- p4.awk---------------------------------- 
+
+BEGIN {  
+
+    Count = 0  
+
+} 
+
+{ 
+
+    if ($1 == "d") { 
+
+        Count++ 
+
+    } 
+
+} 
+
+END { 
+
+    printf("\nNumber of packets dropped is: %d\n", Count) 
+
+} 
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+5. Simulate five nodes point– to – point network with duplex links between 
+them. Set the queue size and vary the bandwidth and find the number of packets 
+sent with different types of traffic. 
+
+ 
+
+# Create a Simulator object 
+
+set ns [new Simulator] 
+
+ 
+
+# Define colors for NAM 
+
+$ns color 1 Blue 
+
+$ns color 2 Red 
+
+ 
+
+# Open the Trace file and NAM trace file 
+
+set tracefile [open p5.tr w] 
+
+$ns trace-all $tracefile 
+
+set namfile [open p5.nam w] 
+
+$ns namtrace-all $namfile 
+
+ 
+
+# Create five nodes 
+
+set n0 [$ns node] 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+set n3 [$ns node] 
+
+set n4 [$ns node] 
+
+ 
+
+# Create Duplex Links 
+
+$ns duplex-link $n0 $n1 2Mb 10ms DropTail 
+
+$ns duplex-link $n0 $n2 2Mb 10ms DropTail 
+
+$ns duplex-link $n0 $n3 2Mb 10ms DropTail 
+
+$ns duplex-link $n0 $n4 2Mb 10ms DropTail 
+
+ 
+
+# Set Queue Limit (Size) to 20  
+
+$ns queue-limit $n0 $n1 20 
+
+$ns queue-limit $n0 $n2 20 
+
+$ns queue-limit $n0 $n3 20 
+
+
+
+$ns queue-limit $n0 $n4 20 
+
+ 
+
+# --- Setup UDP Traffic (n1 to n3) --- 
+
+set udp [new Agent/UDP] 
+
+$ns attach-agent $n1 $udp 
+
+set null [new Agent/Null] 
+
+$ns attach-agent $n3 $null 
+
+$ns connect $udp $null 
+
+$udp set fid_ 1 
+
+ 
+
+set cbr [new Application/Traffic/CBR] 
+
+$cbr attach-agent $udp 
+
+$cbr set packetSize_ 1000 
+
+$cbr set rate_ 1Mb 
+
+ 
+
+# --- Setup TCP Traffic (n2 to n4) --- 
+
+set tcp [new Agent/TCP] 
+
+$ns attach-agent $n2 $tcp 
+
+set sink [new Agent/TCPSink] 
+
+$ns attach-agent $n4 $sink 
+
+$ns connect $tcp $sink 
+
+$tcp set fid_ 2 
+
+ 
+
+set ftp [new Application/FTP] 
+
+$ftp attach-agent $tcp 
+
+ 
+
+# Define a 'finish' procedure 
+
+proc finish {} { 
+
+    global ns tracefile namfile 
+
+    $ns flush-trace 
+
+    close $tracefile 
+
+    close $namfile 
+
+    exec nam out.nam & 
+
+
+
+    exit 0 
+
+} 
+
+ 
+
+# Schedule events 
+
+$ns at 0.5 "$cbr start" 
+
+$ns at 1.0 "$ftp start" 
+
+$ns at 4.0 "$ftp stop" 
+
+$ns at 4.5 "$cbr stop" 
+
+$ns at 5.0 "finish" 
+
+ 
+
+# Run the simulation 
+
+$ns run 
+
+ 
+
+P5.awk 
+
+BEGIN { cbr=0; tcp=0; } 
+
+{ 
+
+    if ($1 == "+") 
+
+    { 
+
+        if($5 == "cbr") cbr++; 
+
+        if($5 == "tcp") tcp++; 
+
+    } 
+
+} 
+
+END { 
+
+    print "UDP Packets Sent = ", cbr; 
+
+    print "TCP Packets Sent = ", tcp; 
+
+    print "Total Packets Sent = ", cbr + tcp; 
+
+} 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+6. Implement distance vector algorithm to find the suitable path for 
+transmission between sender and receiver.  
+
+ 
+
+set ns [new Simulator] 
+
+$ns rtproto DV 
+
+ 
+
+$ns color 1 Blue 
+
+$ns color 2 Red 
+
+ 
+
+set nt [open 6.tr w] 
+
+$ns trace-all $nt 
+
+set na [open 6.nam w] 
+
+$ns namtrace-all $na 
+
+ 
+
+set n0 [$ns node] 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+set n3 [$ns node] 
+
+set n4 [$ns node] 
+
+set n5 [$ns node] 
+
+ 
+
+$n0 color Blue 
+
+$n5 color Red 
+
+$n0 label "Source" 
+
+$n5 label "Receiver" 
+
+$n1 label "R1" 
+
+$n2 label "R2" 
+
+$n3 label "R3" 
+
+$n4 label "R4" 
+
+ 
+
+$ns duplex-link $n0 $n1 10Mb 10ms DropTail 
+
+$ns duplex-link $n0 $n2 10Mb 10ms DropTail 
+
+$ns duplex-link $n1 $n3 10Mb 10ms DropTail 
+
+
+
+$ns duplex-link $n3 $n4 10Mb 10ms DropTail 
+
+$ns duplex-link $n2 $n4 10Mb 10ms DropTail 
+
+$ns duplex-link $n4 $n5 10Mb 10ms DropTail 
+
+ 
+
+set tcp [new Agent/TCP] 
+
+$tcp set class_ 1 
+
+$ns attach-agent $n0 $tcp 
+
+set sink [new Agent/TCPSink] 
+
+$ns attach-agent $n5 $sink 
+
+$ns connect $tcp $sink 
+
+ 
+
+set ftp [new Application/FTP] 
+
+$ftp attach-agent $tcp 
+
+ 
+
+set udp [new Agent/UDP] 
+
+$udp set class_ 2 
+
+$ns attach-agent $n0 $udp 
+
+set null [new Agent/Null] 
+
+$ns attach-agent $n5 $null 
+
+$ns connect $udp $null 
+
+ 
+
+set cbr [new Application/Traffic/CBR] 
+
+$cbr attach-agent $udp 
+
+ 
+
+$ns rtmodel-at 1.5 down $n0 $n2 
+
+$ns rtmodel-at 3.0 up   $n0 $n2 
+
+ 
+
+proc finish {} { 
+
+    global ns nt na 
+
+    $ns flush-trace 
+
+    close $nt 
+
+    close $na 
+
+    exec nam 6.nam & 
+
+
+
+    exit 0 
+
+} 
+
+$ns at 0.1 "$ftp start" 
+
+$ns at 0.1 "$cbr start" 
+
+$ns at 4.5 "$ftp stop" 
+
+$ns at 4.5 "$cbr stop" 
+
+$ns at 5.0 "finish" 
+
+ 
+
+$ns run 
+
+ 
+
+ 
+
+7. Simulation of Link State Routing algorithm.  
+
+ 
+
+set ns [new Simulator] 
+
+ 
+
+$ns rtproto LS 
+
+ 
+
+$ns color 1 Blue 
+
+$ns color 2 Red 
+
+ 
+
+set nt [open 7.tr w] 
+
+$ns trace-all $nt 
+
+set na [open 7.nam w] 
+
+$ns namtrace-all $na 
+
+ 
+
+set n0 [$ns node] 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+set n3 [$ns node] 
+
+set n4 [$ns node] 
+
+set n5 [$ns node] 
+
+ 
+
+$n0 color Blue 
+
+
+
+$n5 color Red 
+
+ 
+
+$n0 label "N0(Source)" 
+
+$n5 label "N5(Dest)" 
+
+$n1 label "N1" 
+
+$n2 label "N2" 
+
+$n3 label "N3" 
+
+$n4 label "N4" 
+
+ 
+
+$ns duplex-link $n0 $n1 10Mb 10ms DropTail 
+
+$ns duplex-link $n0 $n2 10Mb 10ms DropTail 
+
+$ns duplex-link $n1 $n3 10Mb 10ms DropTail 
+
+$ns duplex-link $n2 $n4 10Mb 10ms DropTail 
+
+$ns duplex-link $n4 $n5 10Mb 10ms DropTail 
+
+$ns duplex-link $n3 $n5 10Mb 10ms DropTail 
+
+$ns duplex-link $n1 $n4 10Mb 10ms DropTail 
+
+$ns duplex-link $n2 $n3 10Mb 10ms DropTail 
+
+ 
+
+set tcp [new Agent/TCP] 
+
+$tcp set class_ 1 
+
+$ns attach-agent $n0 $tcp 
+
+set sink [new Agent/TCPSink] 
+
+$ns attach-agent $n5 $sink 
+
+$ns connect $tcp $sink 
+
+ 
+
+set ftp [new Application/FTP] 
+
+$ftp attach-agent $tcp 
+
+ 
+
+set udp [new Agent/UDP] 
+
+$udp set class_ 2 
+
+$ns attach-agent $n0 $udp 
+
+set null [new Agent/Null] 
+
+$ns attach-agent $n5 $null 
+
+
+
+$ns connect $udp $null 
+
+ 
+
+set cbr [new Application/Traffic/CBR] 
+
+$cbr attach-agent $udp 
+
+ 
+
+ 
+
+$ns rtmodel-at 1.5 down $n1 $n3 
+
+$ns rtmodel-at 2.5 up   $n1 $n3 
+
+ 
+
+ 
+
+proc finish {} { 
+
+    global ns nt na 
+
+    $ns flush-trace 
+
+    close $nt 
+
+    close $na 
+
+    exec nam 7.nam & 
+
+    exit 0 
+
+} 
+
+ 
+
+$ns at 0.1 "$ftp start" 
+
+$ns at 0.1 "$cbr start" 
+
+$ns at 4.5 "$ftp stop" 
+
+$ns at 4.5 "$cbr stop" 
+
+$ns at 5.0 "finish" 
+
+ 
+
+$ns run 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+
+ 
+
+8. Simulation of Routing Information Protocol.  
+
+set ns [new Simulator] 
+
+ 
+
+$ns rtproto DV 
+
+ 
+
+$ns color 1 Black 
+
+ 
+
+set nt [open 8.tr w] 
+
+$ns trace-all $nt 
+
+set na [open 8.nam w] 
+
+$ns namtrace-all $na 
+
+ 
+
+set n0 [$ns node] 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+set n3 [$ns node] 
+
+set n4 [$ns node] 
+
+set n5 [$ns node] 
+
+set n6 [$ns node] 
+
+ 
+
+$n0 label "Source" 
+
+$n3 label "Reciever" 
+
+$n1 label "R1" 
+
+$n2 label "R2" 
+
+$n4 label "R4" 
+
+$n5 label "R5" 
+
+$n6 label "R6" 
+
+ 
+
+$ns duplex-link $n0 $n1 10Mb 10ms DropTail 
+
+$ns duplex-link $n0 $n6 10Mb 10ms DropTail 
+
+$ns duplex-link $n1 $n2 10Mb 10ms DropTail 
+
+$ns duplex-link $n2 $n3 10Mb 10ms DropTail 
+
+
+
+$ns duplex-link $n3 $n4 10Mb 10ms DropTail 
+
+$ns duplex-link $n4 $n5 10Mb 10ms DropTail 
+
+$ns duplex-link $n6 $n5 10Mb 10ms DropTail 
+
+ 
+
+set tcp [new Agent/TCP] 
+
+$tcp set class_ 1 
+
+$ns attach-agent $n0 $tcp 
+
+set sink [new Agent/TCPSink] 
+
+$ns attach-agent $n3 $sink 
+
+$ns connect $tcp $sink 
+
+ 
+
+set ftp [new Application/FTP] 
+
+$ftp attach-agent $tcp 
+
+ 
+
+set udp [new Agent/UDP] 
+
+$udp set class_ 2 
+
+$ns attach-agent $n0 $udp 
+
+set null [new Agent/Null] 
+
+$ns attach-agent $n3 $null 
+
+$ns connect $udp $null 
+
+ 
+
+set cbr [new Application/Traffic/CBR] 
+
+$cbr attach-agent $udp 
+
+ 
+
+$ns rtmodel-at 1.5 down $n0 $n1 
+
+$ns rtmodel-at 3.0 up   $n0 $n1 
+
+ 
+
+proc finish {} { 
+
+    global ns nt na 
+
+    $ns flush-trace 
+
+    close $nt 
+
+    close $na 
+
+    exec nam 8.nam & 
+
+
+
+    exit 0 
+
+} 
+
+$ns at 0.1 "$ftp start" 
+
+$ns at 0.1 "$cbr start" 
+
+$ns at 4.5 "$ftp stop" 
+
+$ns at 4.5 "$cbr stop" 
+
+$ns at 5.0 "finish" 
+
+ 
+
+$ns run 
+
+ 
+
+ 
+
+9. Simulate an Ethernet LAN using n nodes, change error rate and data rate and 
+compare throughput.  
+
+ 
+
+set ns [new Simulator] 
+
+ 
+
+$ns color 1 Blue 
+
+ 
+
+set nt [open 9.tr w] 
+
+$ns trace-all $nt 
+
+set na [open 9.nam w] 
+
+$ns namtrace-all $na 
+
+ 
+
+set n0 [$ns node] 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+set n3 [$ns node] 
+
+set n4 [$ns node] 
+
+set n5 [$ns node] 
+
+set n6 [$ns node] 
+
+set n7 [$ns node] 
+
+ 
+
+ 
+
+
+
+$n0 color Red 
+
+$n1 color Red 
+
+$n2 color Red 
+
+$n3 color Red 
+
+ 
+
+$n4 color Blue 
+
+$n5 color Blue 
+
+$n6 color Blue 
+
+$n7 color Blue 
+
+ 
+
+$ns make-lan "$n0 $n1 $n2 $n3" 100Mb 10ms LL Queue/DropTail Mac/802_3 
+
+$ns make-lan "$n4 $n5 $n6 $n7" 100Mb 10ms LL Queue/DropTail Mac/802_3 
+
+ 
+
+$ns duplex-link $n3 $n4 100Mb 10ms DropTail 
+
+$ns duplex-link-op $n3 $n4 color "green" 
+
+ 
+
+set err [new ErrorModel] 
+
+$ns lossmodel $err $n3 $n4 
+
+$err set rate_ 0.01 
+
+ 
+
+set tcp [new Agent/TCP] 
+
+$tcp set class_ 1 
+
+$ns attach-agent $n0 $tcp 
+
+ 
+
+set sink [new Agent/TCPSink] 
+
+$ns attach-agent $n7 $sink 
+
+ 
+
+$ns connect $tcp $sink 
+
+ 
+
+set ftp [new Application/FTP] 
+
+$ftp attach-agent $tcp 
+
+ 
+
+ 
+
+
+
+set udp [new Agent/UDP] 
+
+$udp set class_ 2 
+
+$ns attach-agent $n0 $udp 
+
+ 
+
+set null [new Agent/Null] 
+
+$ns attach-agent $n7 $null 
+
+ 
+
+$ns connect $udp $null 
+
+ 
+
+set cbr [new Application/Traffic/CBR] 
+
+$cbr attach-agent $udp 
+
+$cbr set rate_ 5Mb   ; 
+
+ 
+
+proc finish {} { 
+
+    global ns nt na 
+
+    $ns flush-trace 
+
+    close $nt 
+
+    close $na 
+
+    exec nam 9.nam & 
+
+    exit 0 
+
+} 
+
+ 
+
+$ns at 0.1 "$ftp start" 
+
+$ns at 0.1 "$cbr start" 
+
+ 
+
+$ns at 4.5 "$ftp stop" 
+
+$ns at 4.5 "$cbr stop" 
+
+ 
+
+$ns at 5.0 "finish" 
+
+ 
+
+$ns run 
+
+ 
+
+ 
+
+
+
+P9.awk 
+
+BEGIN{ 
+
+ pkt=0; 
+
+ time=0; 
+
+} 
+
+{   
+
+ if($1=="r" && $4=="7"){ 
+
+ pkt+=$6; 
+
+ time=$2; 
+
+} 
+
+} 
+
+END{ 
+
+ printf("Throughput = %fMbps\n",((pkt/time)*(8/1000000))); 
+
+} 
+
+ 
+
+ 
+
+10. Simulate an Ethernet LAN using n nodes and set multiple traffic nodes and 
+plot congestion window for different source/destination 
+
+ 
+
+set ns [ new Simulator ] 
+
+ 
+
+set tf [open 10.tr w] 
+
+$ns trace-all $tf 
+
+set nf [open 10.nam w] 
+
+$ns namtrace-all $nf 
+
+ 
+
+set n0 [$ns node] 
+
+$n0 color "magenta" 
+
+$n0 label "SRC1" 
+
+ 
+
+set n1 [$ns node] 
+
+set n2 [$ns node] 
+
+ 
+
+
+
+$n2 color "magenta" 
+
+$n2 label "SRC2" 
+
+ 
+
+set n3 [$ns node] 
+
+$n3 color "blue" 
+
+$n3 label "DEST2" 
+
+ 
+
+set n4 [$ns node] 
+
+set n5 [$ns node] 
+
+ 
+
+$n5 color "blue" 
+
+$n5 label "DEST1" 
+
+ 
+
+$ns make-lan "$n0 $n1 $n2 $n3 $n4 $n5" 100Mb 100ms LL Queue/DropTail Mac/802_3 
+
+ 
+
+$ns duplex-link $n4 $n5 1Mb 1ms DropTail 
+
+ 
+
+set tcp1 [new Agent/TCP] 
+
+$ns attach-agent $n0 $tcp1 
+
+ 
+
+set ftp1 [new Application/FTP] 
+
+$ftp1 attach-agent $tcp1 
+
+$ftp1 set packetSize_ 500 
+
+$ftp1 set interval_ 0.0001 
+
+ 
+
+set sink5 [new Agent/TCPSink] 
+
+$ns attach-agent $n5 $sink5 
+
+$ns connect $tcp1 $sink5 
+
+ 
+
+set tcp2 [new Agent/TCP] 
+
+$ns attach-agent $n2 $tcp2 
+
+ 
+
+set ftp2 [new Application/FTP] 
+
+
+
+$ftp2 attach-agent $tcp2 
+
+$ftp2 set packetSize_ 600 
+
+$ftp2 set interval_ 0.001 
+
+ 
+
+set sink3 [new Agent/TCPSink] 
+
+$ns attach-agent $n3 $sink3 
+
+$ns connect $tcp2 $sink3 
+
+ 
+
+set file1 [open file1.tr w] 
+
+$tcp1 trace cwnd_ 
+
+$tcp1 attach $file1 
+
+ 
+
+set file2 [open file2.tr w] 
+
+$tcp2 trace cwnd_ 
+
+$tcp2 attach $file2 
+
+ 
+
+ 
+
+proc finish {} { 
+
+global ns nf tf 
+
+$ns flush-trace 
+
+close $tf 
+
+close $nf 
+
+exec nam 10.nam & 
+
+exit 0 
+
+} 
+
+ 
+
+$ns at 0.1 "$ftp1 start" 
+
+$ns at 5 "$ftp1 stop" 
+
+$ns at 7 "$ftp1 start" 
+
+$ns at 0.2 "$ftp2 start" 
+
+$ns at 8 "$ftp2 stop" 
+
+$ns at 14 "$ftp1 stop" 
+
+$ns at 10 "$ftp2 start" 
+
+
+
+$ns at 15 "$ftp2 stop" 
+
+$ns at 16 "finish" 
+
+$ns run 
+
+ 
+
+     P10.awk 
+
+ 
+
+BEGIN{ 
+
+} 
+
+{ 
+
+    if($6=="cwnd_") 
+
+    printf("%f\t%f\n", $1, $7); 
+
+} 
+
+END{ 
+
+}
